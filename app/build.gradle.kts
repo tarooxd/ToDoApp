@@ -69,9 +69,12 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.mongodb.driver.kotlin.coroutine)
+    implementation(libs.kotlinx.coroutines.reactive)
     implementation(libs.library.base)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.library.sync)
+    implementation(libs.reactor.core)
     kapt(libs.hilt.android.compiler)
 }

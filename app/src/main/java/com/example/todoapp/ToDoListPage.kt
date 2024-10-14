@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.AlignmentLine
@@ -55,7 +56,9 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
     }
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialogAdd = true }) {
+            FloatingActionButton(onClick = { showDialogAdd = true },
+                modifier = Modifier.alpha(0.5f),
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add, contentDescription = "Add"
                 )
@@ -70,9 +73,7 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
         var editedTitle by remember {
             mutableStateOf("")
         }
-        var newItemText by remember {
-            mutableStateOf("")
-        }
+        var selectedStatus by remember { mutableStateOf(selectedItem?.status ?: false) }
         Column(
             modifier = Modifier
                 .fillMaxHeight()
@@ -87,6 +88,7 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                             ToDoItem(item = item, onClick = {
                                 selectedItem = item
                                 editedTitle = selectedItem?.title.orEmpty()
+                                selectedStatus = selectedItem?.status ?: false
                                 showDialog = true
                             })
                         }
@@ -102,7 +104,6 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
             )
 
         }
-        var selectedStatus by remember { mutableStateOf(selectedItem?.status ?: false) }
         if (showDialog) {
             Dialog(onDismissRequest = {
                 showDialog = false
@@ -124,9 +125,6 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                             checked = selectedStatus,
                             onCheckedChange = { isChecked ->
                                 selectedStatus = isChecked
-                                selectedItem?.let {
-                                    it.status = isChecked
-                                }
                             }
                         )
 
@@ -143,6 +141,9 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                             showDialog = false
                             viewModel.editTodo(selectedItem!!.id, editedTitle)
                             editedTitle = ""
+                            selectedItem?.let {
+                                it.status = selectedStatus
+                            }
 
                         }) {
                             Text(text = "Editar")
