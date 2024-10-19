@@ -1,4 +1,4 @@
-package com.example.todoapp
+package com.example.todoapp.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,12 +12,9 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
@@ -27,36 +24,45 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.todoapp.R
+import com.example.todoapp.viewModel.ToDoViewModel
+import com.example.todoapp.model.ToDo
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
-fun ToDoListPage(viewModel: ToDoViewModel) {
+fun ToDoListPage(viewModel: ToDoViewModel, userId: String) {
     var showDialogAdd by remember {
         mutableStateOf(false)
     }
     var showDialog by remember {
         mutableStateOf(false)
     }
+    val scope = rememberCoroutineScope()
+    val errorMessage by viewModel.error.collectAsState()
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialogAdd = true },
+            FloatingActionButton(
+                onClick = { showDialogAdd = true },
                 modifier = Modifier.alpha(0.5f),
             ) {
                 Icon(
@@ -66,9 +72,9 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
         }
     ) {
 
-        val todoList by viewModel.todoList.observeAsState()
+        val toDos by viewModel.todos.collectAsState()
         var selectedItem by remember {
-            mutableStateOf(todoList?.first())
+            mutableStateOf(toDos?.firstOrNull())
         }
         var editedTitle by remember {
             mutableStateOf("")
@@ -80,29 +86,35 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                 .padding(8.dp)
                 .padding(it)
         ) {
-            todoList?.let {
-                LazyColumn(
-                    modifier = Modifier.safeDrawingPadding(),
-                    content = {
-                        itemsIndexed(it) { index: Int, item: ToDo ->
-                            ToDoItem(item = item, onClick = {
-                                selectedItem = item
-                                editedTitle = selectedItem?.title.orEmpty()
-                                selectedStatus = selectedItem?.status ?: false
-                                showDialog = true
-                            })
+            if (errorMessage == null) {
+                toDos?.let {
+                    LazyColumn(
+                        modifier = Modifier.safeDrawingPadding(),
+                        content = {
+                            itemsIndexed(it) { index: Int, item: ToDo ->
+                                ToDoItem(item = item, onClick = {
+                                    selectedItem = item
+                                    editedTitle = selectedItem?.title.orEmpty()
+                                    selectedStatus = selectedItem?.status ?: false
+                                    showDialog = true
+                                })
+                            }
                         }
+                    )
+                    LaunchedEffect(Unit) {
+                        viewModel.getAllTodo(userId = userId)
                     }
+                }
+            } else {
+                 Text(
+                    text = "Por enquanto nada novo",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 16.sp
                 )
-            } ?: Text(
-                text = "Por enquanto nada novo",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                textAlign = TextAlign.Center,
-                fontSize = 16.sp
-            )
-
+            }
         }
         if (showDialog) {
             Dialog(onDismissRequest = {
@@ -132,15 +144,24 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = {
                             showDialog = false
-                            viewModel.deleteTodo(selectedItem!!.id)
-                            editedTitle = ""
+                            scope.launch {
+                                viewModel.deleteTodo(selectedItem!!.id, userId)
+                                editedTitle = ""
+                            }
                         }) {
                             Text(text = "Excluir")
                         }
                         Button(onClick = {
                             showDialog = false
-                            viewModel.editTodo(selectedItem!!.id, editedTitle)
-                            editedTitle = ""
+                            scope.launch {
+                                viewModel.editTodo(
+                                    selectedItem!!.id,
+                                    editedTitle,
+                                    selectedStatus,
+                                    userId
+                                )
+                                editedTitle = ""
+                            }
                             selectedItem?.let {
                                 it.status = selectedStatus
                             }
@@ -166,8 +187,10 @@ fun ToDoListPage(viewModel: ToDoViewModel) {
                     })
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = {
-                            viewModel.addTodo(editedTitle)
-                            editedTitle = ""
+                            scope.launch {
+                                viewModel.addTodo(editedTitle, userId)
+                                editedTitle = ""
+                            }
                             showDialogAdd = false
                         }) {
                             Text(text = "Adicionar")

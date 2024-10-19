@@ -15,12 +15,16 @@ lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
 composeBom = "2024.04.01"
 mongodbDriverKotlinCoroutine = "4.10.1"
+navigationCompose = "2.8.3"
 reactorCore = "3.5.0"
 runtimeLivedata = "1.7.3"
+volley = "1.2.1"
+serialization = "1.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "runtimeLivedata" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
@@ -43,6 +47,8 @@ library-base = { module = "io.realm.kotlin:library-base", version.ref = "library
 library-sync = { module = "io.realm.kotlin:library-sync", version.ref = "librarySync" }
 mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodbDriverKotlinCoroutine" }
 reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactorCore" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
